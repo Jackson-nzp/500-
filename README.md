@@ -1,34 +1,39 @@
-# top_500_enterprises
-​
+# 处理思路
 
 1. 首先爬取公司名字和营收（百万元），可以看的style以及规整的tr
 
-2. 任意选中1个可以发现公司的名字在<a  href >中间，且我们接下来要爬取的信息也要建立在超链接之上，所以这里将所有超链接的标签储存在list中：
+2. 任意选中1个可以发现公司的名字在\<a  href\>中间，且我们接下来要爬取的信息也要建立在超链接之上，所以这里将所有超链接的标签储存在list中：
 
+```python
 list = soup.find(attrs={"style":'word-break:break-all'}).find_all('a')
+```
 
- 这样接下来直接string就可以获取公司名字：
-
+这样接下来直接string就可以获取公司名字：
+```python
 for item in list:
-		item_name=item.string
+	item_name=item.string
+```
 
 3. 然后通过寻找父母节点和兄弟节点确定营收：
+```python
+item_revenue=item.find_parent().find_next_sibling().string
+```
+* 一开始并没有选择在公司名字页面爬取信息，而是获取超链接后载新页面获取信息。但下一页的信息标签不规整，处理起来对象关系太复杂-->故最好一开始找规整的整理，会更为方便
+ 
+ 4. 通过get方法获取超链接:
+ * 此处需要处理相对路径
+ * 且由于打开新的页面，需要将html转为soup
 
-		item_revenue=item.find_parent().find_next_sibling().string
+> 笔者在写的时候遇到了response的内容不能直接按照之前方式进行处理，亦或是用response.content返回为str没法使用方法  
 
-//一开始并没有选择此处来爬取信息，而是直接打开超链接，但下一页的信息的标签不规整，处理起来对象关系太复杂，故最好一开始找规整的整理，会更为方便
-
-
-
- 4. 通过get方法获取超链接，此处需要处理相对路径；且由于打开新的页面，需要将html转为soup
-
-笔者在写的时候遇到了response不能进行处理，亦或是str没法使用方法（用了response.content）
-
+本质问题是新打开的页面重新处理问题：
+```python
         sub_url=item.get('href')
 		sub=sub_url.lstrip('../../')
 		new_url="主站网址"+sub
 		new_html=request_url(new_url)
 		text=BeautifulSoup(new_html,'lxml')
+```
 
  5. 接下来的处理就相当规整了：class——tr——align：right，直接find_all 当成数组处理
 
